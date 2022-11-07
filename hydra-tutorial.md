@@ -112,7 +112,7 @@ In this section, we will discuss a high-level overview of the different stages o
 	</details>
 </details> 
 
-<details open>
+<details >
 <summary><b><h1 style="display:inline">3. Proof of concept</h1></b></summary>
 <p><br>
 In this section, we will showcase the usage of the <a href="https://github.com/input-output-hk/hydra-poc">proof of concept</a> implementation of the hydra protocol. The documentation for this implementation can be found <a href="https://hydra.family/head-protocol/">here</a>. Below we will show detailed usages of the main components, these consist of the Hydra node and the usage of the associated API it exposes.
