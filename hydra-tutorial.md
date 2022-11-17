@@ -1,4 +1,4 @@
-### **Disclaimer**: this document is written in Oktober 2023, the current version of hydra-poc may differ from the discription below. The goal of this document is to be educational. For a more updated view on hydra see the <a href="https://hydra.family/head-protocol/">documentation</a>.
+### **Disclaimer**: this document is written in October 2023, the current version of hydra-poc may differ from the description below. The goal of this document is to be educational. For a more updated view on hydra, see the <a href="https://hydra.family/head-protocol/">documentation</a>.
 
 # <a href="https://eprint.iacr.org/2020/299.pdf">Hydra: Fast Isomorphic State Channels</a> 
 <details>
