@@ -66,7 +66,7 @@ In this section, we will discuss a high-level overview of the different stages o
 	* The protocol parameters that they want to use in the Hydra head. 
 
 	<br>
-	The IP address and the port is needed so that other parties know how to establish a secure communication channel with each other. We leave out here what a secure connection entails. The two keys are needed to ensure that parties are cryptographically identified on the blockchain and in the Hydra head. And lastly, all participants need to reach an agreement on the used protocol parameters that will be used inside the head. More details will follow on all these four things. <br>
+	The IP address and the port is needed so that other parties know how to establish a secure pairwise communication channel with each other. We leave out here what a secure connection entails. The two keys are needed to ensure that parties are cryptographically identified on the blockchain and in the Hydra head. And lastly, all participants need to reach an agreement on the used protocol parameters that will be used inside the head. More details will follow on all these four things. <br>
 
 	Then, once each of the parties has the above information about the other parties, they each can start their Hydra node. This will establish a communication channel for the rest of the protocol execution. <br>
 
