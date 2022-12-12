@@ -1,4 +1,4 @@
-### **Disclaimer**: this document is written in October 2022, the current version of hydra-poc may differ from the description below. The goal of this document is to be educational. For a more updated view on hydra, see the <a href="https://hydra.family/head-protocol/">documentation</a>.
+### **Disclaimer**: this document is written in October 2022, the current version of hydra may differ from the description below. The goal of this document is to be educational. For a more updated view on hydra, see the <a href="https://hydra.family/head-protocol/">documentation</a>.
 
 # <a href="https://eprint.iacr.org/2020/299.pdf">Hydra: Fast Isomorphic State Channels</a> 
 <details>
@@ -10,7 +10,7 @@ In this document, we will discuss the current implementation of the Hydra proof 
 *   <details>
     <summary><b>1.1	Context</b></summary>
     <p>
-	Any layer one blockchain suffers from a fundamental scalability limitation, this is fundamental because intentionally, transactions on a blockchain are validated by multiple parties to enhance the security of the protocol, this just consumes more time. For Cardano, this is reflected in the fact that blocks are created on average each 20 seconds, in this time, block creation, propagation, and validation happens. These limitations ultimately mean that state, the information that describes the system, can only change in discrete steps of this duration. Besides, given peak hours on the blockchain when there is a transaction queue, the time required to settle and confirm a transaction might also be higher, further increasing the effective settlement time. This because your transaction might not be added to the next block, but the second or even third one coming.
+	Any layer one blockchain suffers from a fundamental scalability limitation, this is fundamental because intentionally, transactions on a blockchain are validated by multiple parties to enhance the security of the protocol, this just consumes more time. For Cardano, this is reflected in the fact that blocks are created on average each 20 seconds, in this time, block creation, propagation, and validation happens. These limitations ultimately mean that state, the information that describes the system, can only change in discrete steps of this duration. Besides, given peak hours on the blockchain when there is a transaction queue, the time required to settle and confirm a transaction might also be higher, further increasing the effective settlement time. This is because your transaction might not be added to the next block, but the second or even third one coming.
 	</p>
 	</details>
 
@@ -19,19 +19,19 @@ In this document, we will discuss the current implementation of the Hydra proof 
 	<p>
 	In general, not specific to blockchains, computer science knows two common ways of scaling systems, they are <b>vertical</b> and <b>horizontal</b> scaling. Both try to increase resources available to a system to achieve better overall performance. <br>
 
-	For vertical scaling, the performance of the system is increased by adding resources available to the already existing instance of the system. For Cardano, this practically means, increasing the block size to allow for more actions in each 20 seconds for the layer one blockchain. This is a great way to initially scale the system, but is always capped by some physical limits. This limit is the diffusion time of a block, to ensure the security of the system each block has roughly 5 seconds to propagate and diffuse among the other network participant so that they can build another block on top of it. <br>
+	For vertical scaling, the performance of the system is increased by adding resources available to the already existing instance of the system. For Cardano, this practically means increasing the block size to allow for more actions in each 20 seconds for the layer one blockchain. This is a great way to initially scale the system, but is always capped by some physical limits. This limit is the diffusion time of a block. To ensure the security of the system, each block has roughly 5 seconds to propagate and diffuse among the other network participants so that they can build another block on top of it. <br>
 
-	Then we have horizontal scaling, here the performance of the system is increased by adding more instances of the same system alongside each other. Practically, this means that besides the main chain, one or multiple side chains are spun up that do the same thing, each "x" seconds all instances create a block. Unlike horizontal scaling, vertical scaling does not know a limit, there can be many side chains that are connected to the layer one. A downside to this way of scaling is that this abstract notion of "state" is split up into multiple pieces. Each instance is blind to what is happening on the other instances, and crossing to another instance requires a bridge (the state is sharded). <br>
+	Then we have horizontal scaling. Here, the performance of the system is increased by adding more instances of the same system alongside each other. Practically, this means that besides the main chain, one or multiple side chains are spun up that do the same thing, each "x" seconds all instances create a block. Unlike vertical scaling, horizontal scaling does not know a limit, there can be many side chains that are connected to the layer one. A downside to this way of scaling is that this abstract notion of "state" is split up into multiple pieces. Each instance is blind to what is happening on the other instances, and crossing to another instance requires a bridge (the state is sharded). <br>
 
 	![horizontal-vertical-scaling.png](./pictures/horizontal-vertical-scaling.png) <br>
 
 	Now there is a third way of scaling blockchains, this is via state channels, of which Hydra is a flavor. State channels, similar to the horizontal scaling solution, are a layer two solution that runs separately and alongside the layer one, thought the two are different! <br>
 
-	At its core, a state channel in the context of blockchains is a smart contract that enforces a set of predefined rules for transaction handling between parties. Unlike in the horizontal scaling case, where multiple instances of a blockchain are run at the same time, a state channels originates from the main chain and eventually merges back in the main chain, it lives only temporally (though it could exist indefinitely). <br>
+	At its core, a state channel in the context of blockchains is a smart contract that enforces a set of predefined rules for transaction handling between parties. Unlike in the horizontal scaling case, where multiple instances of a blockchain are run at the same time, a state channel originates from the main chain. Eventually, it merges back in the main chain, it lives only temporally (though it could exist indefinitely). <br>
 
-	The goal of these state channels is to take some pieces of state on the layer one blockchain and validate its progress else where between only those parties whom are concerned about this state. Then, after this computation is done, the parties return the final state on which all parties agree back to layer one. This construction means that the 20-second time duration of block production no longer pose a problem for the propagation of the state in a state channel. Moreover, parties that run a state channel could agree on not charging any transaction fee for these computations! <br>
+	The goal of these state channels is to take some pieces of state on the layer one blockchain and validate its progress elsewhere between only those parties who are concerned about this state. Then, after this computation is done, the parties return the final state on which all parties agree back to layer one. This construction means that the 20-second time duration of block production no longer poses a problem for the propagation of the state in a state channel. Moreover, parties that run a state channel could agree on not charging any transaction fee for these computations! <br>
 
-	The security of the state channels lies in the hands of the parties that run the channel, similar to a blockchain. But there is a difference, instead of blocks, the progress is captured in snapshots. These snapshots are intermediate captures of the state of the channel and are signed by each party in the channel. When the channel closes, each party has a chance to return their last perceived state. In case of dispute, the main chain can always verify the latest snapshot, which contains all signatures of the participants and a timestamp. Thus, with each transition in channel, cryptographic proof is gathered, and in case of dispute, the layer one blockchain is leveraged to settle that dispute. A visual representation <br>
+	The security of the state channels lies in the hands of the parties that run the channel, similar to a blockchain. But there is a difference, instead of blocks, the progress is captured in snapshots. These snapshots are intermediate captures of the state of the channel and are signed by each party in the channel. When the channel closes, each party has a chance to return their last perceived state. In case of dispute, the main chain can always verify the latest snapshot, which contains all signatures of the participants and a timestamp. Thus, with each transition in a channel, cryptographic proof is gathered, and in case of dispute, the layer one blockchain is leveraged to settle that dispute. A visual representation <br>
 
 	![statechannel.png](./pictures/statechannel.png)
 	</p>
@@ -63,14 +63,14 @@ In this section, we will discuss a high-level overview of the different stages o
     * An IP address + port of their machine that will run the Hydra node.
     * A Hydra verification key to identify them in the head.
 	* A Cardano verification key to identify them on the blockchain.
-	* The protocol parameters that they want to use in the Hydra head. 
+	* Agree on the protocol parameters that they want to use in the Hydra head. 
 
 	<br>
 	The IP address and the port is needed so that other parties know how to establish a secure pairwise communication channel with each other. We leave out here what a secure connection entails. The two keys are needed to ensure that parties are cryptographically identified on the blockchain and in the Hydra head. And lastly, all participants need to reach an agreement on the used protocol parameters that will be used inside the head. More details will follow on all these four things. <br>
 
 	Then, once each of the parties has the above information about the other parties, they each can start their Hydra node. This will establish a communication channel for the rest of the protocol execution. <br>
 
-	Via this communication channel, one party can start the protocol by posting an **initialize** transaction on the blockchain. This transaction is made to a smart contract that keeps track of the identification keys describes above of the parties. This party also notifies, via the secure communication channel, the others that this happened. The other parties can confirm this onchain and use this contract to join the protocol. They join by **committing** funds that they have to this contract. Here, the contract keeps track of what funds were put in by which party by linking the funds to their verification key. This in case that the protocol is aborted before the head is opened. <br>
+	Via this communication channel, one party can start the protocol by posting an **initialization** transaction on the blockchain. This transaction is made to a smart contract that keeps track of the identification keys describes above of the parties. This action is then observed by the other parties on the blockchain, they confirm this transaction and use this contract to join the protocol. They join by **committing** funds that they have to this contract. Here, the contract keeps track of what funds were put in by which party by linking the funds to their verification key. This in case that the protocol is aborted before the head is opened, so that each can reclaim their funds.<br>
 	</p>
 	</details>
 
@@ -82,19 +82,21 @@ In this section, we will discuss a high-level overview of the different stages o
 
 	From this point, the committed funds by each party are represented in the hydra head as the initial snapshot. Remember that Hydra is an isomorphic state channel, this means it behaves and looks similar to the layer one blockchain. That is why these snapshots keep track of the state using the EUTxO model. More explicit, each snapshot consists of at least these things
 
-	* a number to indicate its order with respect to other snapshots.
+	* a number to indicate its order regarding other snapshots.
 	* a commitment to a collection of UTxO's that represent the state of the head.
 	* The signatures of all parties.
 
 	<br>
-	With each new transaction, the collection of UTxO's changes and a new snapshot is made. The time that it takes to perform this snapshot is dependent on the size of the UTxO collection, the number of parties in the head and their communication time. But not that this time is certainly less than the 20 seconds per block. Also, not the entire UTxO's collection is stored in the snapshot, since this might get gigantic. The commitment to a particular collection is stored instead, this is done via Merkle tree's, a computer science data structure that allows you to prove that a UTxO is part of the commitment without storing it in full.
+	With each new transaction, the collection of UTxO's changes and a new snapshot is made. The time that it takes to perform this snapshot is dependent on the size of the UTxO collection, the number of parties in the head and their communication time. But, note that this time is certainly less than the 20 seconds per block. Also, note that the entire UTxO's collection is stored in the snapshot. Since the total size of the head might get gigantic as it is used, the commitment to a particular collection is stored instead. This is done via Merkle tree's, a computer science data structure that allows you to prove that a UTxO is part of the commitment without storing it in full.
 	</p>
 	</details>
 
 *   <details>
     <summary><b>3. Closing</b></summary>
     <p>
-	In this stage, the parties are done with their transactions in the head and want to close it. During the previous stage, they all gathered multiple ordered snapshots, each index by an increasing number. With these, any party can close the head at any time, they do this by making a transaction on the layer one blockchain that notifies the contract that they want to close the head. More detailed, they notify the contract of their last perceived known snapshot. The other parties see this transaction happen on the blockchain and check with the snapshot number that this snapshot is also their last perceived snapshot. If not, they have some time to contest to that snapshot by providing a newer snapshot. The time they have is given as a parameter in the initialization phase.<br>
+	In this stage, the parties are done with their transactions in the head and want to close it. During the previous stage, they all gathered multiple ordered snapshots, each index by an increasing number. With these snapshots, any party can close the head at any time, they do this by making a transaction on the layer one blockchain that notifies the contract that they want to close the head. More detailed, they notify the contract of their last perceived known snapshot. <br>
+	
+	The other parties see this transaction happen on the blockchain and check with the snapshot number that this snapshot is also their last perceived snapshot. If not, they have some time to **contest** to that snapshot by providing a newer snapshot to the contract. The time they have is given as a parameter in the initialization phase.<br>
 
 	Notice that no party can cheat and can publish an old snapshot, as any of the other parties can contest to that intermediate snapshot.
 	</details>
@@ -103,9 +105,9 @@ In this section, we will discuss a high-level overview of the different stages o
     <summary><b>4. Final</b></summary>
     <p>
 
-	In this stage, the head is closed, but the initial funds are still at the contract. To distribute the funds, the contract need to **fanout** the snapshot. From the latest snapshot, the commitment to a collection of UTxO's can be extracted. Each party can use this Merkle tree data structure to prove that an UTxO is part of it. The contract allows them to extract it from the contract to the associated address that corresponds to that UTxO.
+	In this stage, the head is closed, but the initial funds are still at the contract. To distribute these funds, the contract needs to **fanout** the collected UTxOs from the commitment phase given the latest snapshot. From the latest snapshot, the commitment to a collection of UTxO's can be extracted. Each party can use this Merkelised data structure to prove that an UTxO that they owned in the head is part of it of the commitment. The contract then allows parties to extract UTxO's from the contract to the associated address that corresponds to UTxO as in the Merkle Tree.
 
-	As a concluding overview, the four stages above give the following diagram.
+	It is important to note here that value cannot be created at this fanout stage with respect to the commitment phase. Though native assets can be used and committed in a head (it's an isomorphic state channel), the creation of new ones in a head cannot be fanned out. This is because the mainchain has no scope on any transactions in a head, so in particular, the layer one is oblivious to any (in)correct execution of a minting policy in the head. So in conclusion, the value that enters a head in the commitment phase equals the value extracted in the fanout phase. As a concluding overview, the four stages above give the following diagram.
 
 	![hydra-head-lifecycle](./pictures/hydra-head-lifecycle.svg)
 	</p>
@@ -113,9 +115,9 @@ In this section, we will discuss a high-level overview of the different stages o
 </details> 
 
 <details >
-<summary><b><h1 style="display:inline">3. Proof of concept</h1></b></summary>
+<summary><b><h1 style="display:inline">3. Using Hydra </h1></b></summary>
 <p><br>
-In this section, we will showcase the usage of the <a href="https://github.com/input-output-hk/hydra-poc">proof of concept</a> implementation of the hydra protocol. The documentation for this implementation can be found <a href="https://hydra.family/head-protocol/">here</a>. Below we will show detailed usages of the main components, these consist of the Hydra node and the usage of the associated API it exposes.
+In this section, we will showcase the usage of the <a href="https://github.com/input-output-hk/hydra">implementation</a> of the hydra protocol. The documentation for this implementation can be found <a href="https://hydra.family/head-protocol/">here</a>. Below we will show detailed usages of the main components, these consist of the Hydra node and the usage of the associated API it exposes.
 </p>
 
 *   <details>
@@ -126,15 +128,15 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 		<li>Postman</li>
 	</ol>
 
-	Here we will use Nix to build the software and Postman will be used to connect to the Hydra API Web Socket. Also, before we start using the proof of concept, we will set up a cardano-node connected to the preview testnet. Every Hydra node needs a connection to the network to verify and post onchain transactions in a trustless way.<br></br>
+	Here we will use Nix to build the software and Postman will be used to connect to the Hydra API Web Socket. Also, before we start using Hydra, we will set up a cardano-node connected to the preview testnet. Every Hydra node needs a connection to a layer one network to verify and post onchain transactions in a trustless way.<br></br>
 		
-	To start, we clone the hydra-poc repository using
+	To start, we clone the hydra repository using
 
 	```
-	git clone https://github.com/input-output-hk/hydra-poc
+	git clone https://github.com/input-output-hk/hydra
 	```
 
-	Change directory to the `hydra-poc` repository and perform checkout to release 0.8.0
+	Change directory to the `hydra` repository and perform checkout to release 0.8.0
 
 	```
 	git checkout 0.8.0
@@ -170,7 +172,7 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 	cardano-node run +RTS -N -A16m -qg -qb -RTS --topology ./topology.json --database-path ./db --socket-path ./node.socket --host-addr 0.0.0.0 --port 6000 --config ./config.json
 	```
 
-	Keep this terminal running and open another terminal in the `hydra-poc` repository. Again we enter a nix-shell with
+	Keep this terminal running and open another terminal in the `hydra` repository. Again we enter a nix-shell with
 
 	```
 	nix-shell
@@ -179,7 +181,7 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 	Once we are in this shell, we export the location of the cardano-node socket with
 
 	```
-	export CARDANO_NODE_SOCKET_PATH=/full/path/to/hydra-poc/preview-testnet/node.socket
+	export CARDANO_NODE_SOCKET_PATH=/full/path/to/hydra/preview-testnet/node.socket
 	```
 
 	This will let our system know where the entry point for communication with the node resides, this is necessary for other programs that will utilize the node. We will also use the following command to add auto-completion of the client to our path
@@ -207,7 +209,7 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
     <summary><b>2.2	Setting up the Hydra nodes</b></summary>
     <p>
 
-    To showcase the protocol, we consider a minimal setup of two participants that together want to open a hydra head, call these two Bob and Alice. To start, we enter a nix-shell in the `hydra-poc` repo and create a directory to hold some setup files.
+    To showcase the protocol, we consider a minimal setup of two participants that together want to open a hydra head, call these two Bob and Alice. To start, we enter a nix-shell in the `hydra` repo and create a directory to hold some setup files.
 
 	```
 	mkdir test-head
@@ -235,7 +237,7 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 	```
 	cardano-cli query utxo --testnet-magic 2 --address $(cat ./test-head/Alice/AliceCardano.addr)
 	```
-	We use can use the following script to split these funds with the wallet of Bob.
+	We can use the following script to split these funds with the wallet of Bob.
 	```
 	#!/usr/bin/env bash
 
@@ -272,7 +274,7 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 	```
 	nix-shell -p jq
 	```
-	Then for the script use
+	Then, to execute the script use
 	```
 	export CCLI_CMD=$(which cardano-cli)
 	./sample-node-config/gcp/scripts/fuel-testnet.sh ./preview-testnet/ ./test-head/Alice/AliceCardano.sk 4900000000
@@ -285,18 +287,23 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 	cabal build hydra-tools
 	cabal build hydra-node
 	```
-	This can take some time. Then we can use
+	This can take some time. After this is done, we create two aliases that access these two binaries (you can also add an export to your `.bashrc` file)
 	```
-	cabal exec hydra-tools -- gen-hydra-key --output-file ./test-head/Alice/AliceHydra
-	cabal exec hydra-tools -- gen-hydra-key --output-file ./test-head/Bob/BobHydra
+	alias hydra-tools=full/path/to/dist-newstyle/build/x86_64-linux/ghc-8.10.7/hydra-node-0.8.0/x/hydra-tools/build/hydra-tools/hydra-tools
+	alias hydra-node=full/path/to/dist-newstyle/build/x86_64-linux/ghc-8.10.7/hydra-node-0.8.0/x/hydra-node/build/hydra-node/hydra-node
 	```
-	We see the creation of the files `AliceHydra.sk` and  `AliceHydra.vk` (similar for Bob). These are the cryptographic key pairs that sign each snapshot. 
+	to make them locally available. Alternatively, you can download the prebuilt binaries via this <a href="https://github.com/input-output-hk/hydra-poc/releases/tag/0.8.0">link</a>. Then we can use
+	```
+	hydra-tools gen-hydra-key --output-file ./test-head/Alice/AliceHydra
+	hydra-tools gen-hydra-key --output-file ./test-head/Bob/BobHydra
+	```
+	We see the creation of the files `AliceHydra.sk` and  `AliceHydra.vk` (similar for Bob). These are the cryptographic key pairs that sign each snapshot for Alice and Bob. 
 	
-	We still need one thing, to spin up the two hydra-nodes, that is the protocol parameter that we will use in our test head. We will use the protocol parameters that are the same on the testnet, but with no fees! We copy them from the `hydra-poc` directory with
+	We still need one thing, before we spin up the two hydra-nodes, that is the protocol parameter that we will use in our test head. We will use the protocol parameters that are the same on the testnet, but with a small tweak that there are no fees! Copy these settings from the `hydra` directory with
 	```
 	cp hydra-cluster/config/protocol-parameters.json ./test-head/protocol-parameters.json
 	```
-	As stated in the protocol outline, we need these four things to initiate the communication of a head
+	Next we assign Alice the localhost address `127.0.0.1:5001` and Bob `127.0.0.1:5002`. As stated in the protocol outline, we need these four things to initiate the communication of a head
 
     * An IP address + port of their machine that will run the Hydra node.
     * A Hydra verification key to identify them in the head.
@@ -304,43 +311,43 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 	* The protocol parameters that they want to use in the Hydra head. 
 
 		<br>
-	Which we have set up above, now we can start a hydra node for each party. We assign Alice the localhost address `127.0.0.1:5001` and Bob `127.0.0.1:5002`.
+	Which we have set up above, now we can start a hydra node for each party.
 	
-	Next we open two terminals and enter a nix-shell for each from the `hydra-poc` directory. Then use the following command to launch a hydra-node for Alice
+	Now we open two terminals and enter a nix-shell for each from the `hydra` directory, and reassign the aliases as above for the `hydra-node`. Before we launch the node, we first change directory to `test-head/Alice. We do this such that each node (that of Alice or Bob) does not interfere with the other. The node might produce some temporary files, so it is good practice to keep nodes separated at run time. After that, we launch a hydra-node for Alice with 
 	```
-	cabal exec hydra-node -- \
+	hydra-node \
 		--node-id 1 --port 5001 --api-port 4001 \
   		--peer 127.0.0.1:5002 \
-  		--hydra-signing-key ./test-head/Alice/AliceHydra.sk \
-  		--hydra-verification-key ./test-head/Bob/BobHydra.vk \
+  		--hydra-signing-key AliceHydra.sk \
+  		--hydra-verification-key ../Bob/BobHydra.vk \
   		--hydra-scripts-tx-id 4081fab39728fa3c05c0edc4dc7c0e8c45129ca6b2b70bf8600c1203a79d2c6d \
-  		--cardano-signing-key ./test-head/Alice/AliceCardano.sk \
-  		--cardano-verification-key ./test-head/Bob/BobCardano.vk \
-  		--ledger-genesis ./preview-testnet/shelley-genesis.json \
-  		--ledger-protocol-parameters ./test-head/protocol-parameters.json \
+  		--cardano-signing-key AliceCardano.sk \
+  		--cardano-verification-key ../Bob/BobCardano.vk \
+  		--ledger-genesis ../../preview-testnet/shelley-genesis.json \
+  		--ledger-protocol-parameters ../protocol-parameters.json \
   		--network-id 2 \
-  		--node-socket ./preview-testnet/node.socket
+  		--node-socket ../../preview-testnet/node.socket
 	```
-	And for Bob
+	Similarly, we change directories to `test-head/Bob and execute for Bob
 	```
-	cabal exec hydra-node -- \
+	hydra-node \
 	--node-id 2 --port 5002 --api-port 4002 \
 	--peer 127.0.0.1:5001 \
-	--hydra-signing-key ./test-head/Bob/BobHydra.sk \
-	--hydra-verification-key ./test-head/Alice/AliceHydra.vk \
+	--hydra-signing-key BobHydra.sk \
+	--hydra-verification-key ../Alice/AliceHydra.vk \
 	--hydra-scripts-tx-id 4081fab39728fa3c05c0edc4dc7c0e8c45129ca6b2b70bf8600c1203a79d2c6d \
-	--cardano-signing-key ./test-head/Bob/BobCardano.sk \
-	--cardano-verification-key ./test-head/Alice/AliceCardano.vk \
-	--ledger-genesis ./preview-testnet/shelley-genesis.json \
-	--ledger-protocol-parameters ./test-head/protocol-parameters.json \
+	--cardano-signing-key BobCardano.sk \
+	--cardano-verification-key ../Alice/AliceCardano.vk \
+	--ledger-genesis ../../preview-testnet/shelley-genesis.json \
+	--ledger-protocol-parameters ../protocol-parameters.json \
 	--network-id 2 \
-	--node-socket ./preview-testnet/node.socket
+	--node-socket ../../preview-testnet/node.socket
 	```
-	Here a few things stand out, first we see that each party adds the other as a `--peer`. Secondly, each party adds its own Cardano and Hydra signing key and peers Cardano and Hydra verification key. We also see that each node opens a local API for the party to communicate with the node (using the `--api-port` flag). Lastly, we see the flag `--hydra-scripts-tx-id` followed by a hash. This is a transaction hash on the preview network that contains the hydra protocol scripts in its outputs. This way, we can reference these in our transactions to save on fees when making onchain transactions. 
+	Here a few things stand out, first we see that each party adds the other as a `--peer`. Secondly, each party adds its own Cardano and Hydra signing key and peers Cardano and Hydra verification key. We also see that each node opens a local API for that party to communicate with its own node (using the `--api-port` flag). Lastly, we see the flag `--hydra-scripts-tx-id` followed by a hash. This is a transaction hash on the preview network that contains the hydra protocol scripts in its outputs. This way, we can reference these in our transactions to save on fees when making onchain transactions. 
 	</p>
 	</details>
 
-*   <details open>
+*   <details>
     <summary><b>2.3	Opening a Hydra head</b></summary>
     <p>
 
@@ -348,9 +355,9 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 
 	![postman-setup-view.png](./pictures/postman-setup-view.png)
 
-	Now that we are connected, we can use this API to communicate with each Hydra head. For a details API reference, see the [documentation](https://hydra.family/head-protocol/api-reference).
+	Now that we are connected, we can use this API to communicate with each Hydra head. For a detailed API reference, see the [documentation](https://hydra.family/head-protocol/api-reference).
 
-	To open a head, one of the two parties first has to initialize the state channel onchain. This can be done via the following API call
+	To open a head, one of the two parties first has to initialize the state channel. This can be done via the following API call
 
 	```json
 	{
@@ -360,7 +367,7 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
 	```
 	Here the `contestationPeriod` is the time the other parties have when a checkpoint is posted on the mainchain and the head is closing. Practically, this means that any party has 60 seconds after that event to contest and post their latest snapshot to the mainchain. The hydra node will contest automatically in case of an outdated snapshot in the closing stage.
 
-	We post this JSON message as Alice in the new message are in postman. When sent, we very via Bob that he received the message and saw the initialize transaction onchain,
+	We post this JSON message as Alice in the "new message" field in postman. When sent, we very via Bob that he received the message and saw the initialize transaction onchain,
 	```json
 	{
     "parties": [
@@ -388,7 +395,7 @@ In this section, we will showcase the usage of the <a href="https://github.com/i
   		}
 	}
 	```
-	Here we replace the field of the tag `"utxo"` with the utxo that each party wants to add. Using the commands
+	Here, we replace the field of the tag `"utxo"` with the utxo that each party wants to add. Using the commands
 	```
 	cardano-cli query utxo --address $(cat ./test-head/Alice/AliceCardano.addr) --testnet-magic 2
 	cat test-head/Alice/AliceCardano.addr 
